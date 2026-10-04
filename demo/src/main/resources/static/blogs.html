@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
         <title> Blogs </title>
         <link rel="stylesheet" href="css/style.css">
+        <script src="jssrc/UserApiBlog.js"></script>
     </head>
+
     <body>
         <nav class="navbar">
             <ul class="nav-links">
@@ -19,5 +22,192 @@
                 </span>
             </div>
         </nav>
+
+        <div id="new-post-pane" style="background-color:#f6dce8; border-radius:20px; padding:30px 40px;
+                    margin:40px 60px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:left;">
+            <h3 style="margin:0 0 15px 0;">New Post</h3>
+            <textarea id="post-content" rows="6" style="width:100%; max-width:600px;"
+                placeholder="What's on your mind?"></textarea>
+            <br><br>
+            <button class="get-started" id="submit-post-btn">Post</button>
+            <p id="post-status" class="centered-text" style="display:none;"></p>
+        </div>
+
+        <h3 id="blogs-heading" style="margin:60px 60px 20px 60px; text-align:center;">My Blogs</h3>
+
+        <section id="blog-list" style="max-width:1000px; margin:0 auto 20px auto;">
+            <!-- blog entries get inserted here -->
+        </section>
+        <p id="blogs-status" class="centered-text" style="display:none;"></p>
+
+
+        <script>
+            const contentInput = document.getElementById("post-content");
+            const submitBtn = document.getElementById("submit-post-btn");
+            const statusEl = document.getElementById("post-status");
+            const listEl = document.getElementById("blog-list");
+            const blogsStatusEl = document.getElementById("blogs-status");
+
+            function showStatus(message, isError) {
+                statusEl.textContent = message;
+                statusEl.style.color = isError ? "#A86887" : "#4A8B5C";
+                statusEl.style.display = "block";
+            }
+
+            function showBlogsStatus(message, isError) {
+                blogsStatusEl.textContent = message;
+                blogsStatusEl.style.color = isError ? "#A86887" : "#4A8B5C";
+                blogsStatusEl.style.display = "block";
+            }
+
+            // Formats an ISO timestamp as "Jul 25, 2026 · 14:32".
+            // Older rows saved before timestamps included a time will just show 00:00 —
+            // there's no real hour stored for those, so this is the best we can do for them.
+            function formatDateAndHour(rawDate) {
+                const parsed = new Date(rawDate);
+                if (isNaN(parsed.getTime())) {
+                    return rawDate; // fallback: show whatever was stored, unparsed
+                }
+                const datePart = parsed.toLocaleDateString(undefined, {
+                    year: "numeric", month: "short", day: "numeric"
+                });
+                const timePart = parsed.toLocaleTimeString(undefined, {
+                    hour: "2-digit", minute: "2-digit"
+                });
+                return `${datePart} · ${timePart}`;
+            }
+
+            // blogs.html?id=5 views user 5's blogs. No id in the URL falls back
+            // to the logged-in user's own blogs (the old default behavior).
+            const params = new URLSearchParams(window.location.search);
+            const requestedUserId = params.get("id");
+            const newPostPane = document.getElementById("new-post-pane");
+            const blogsHeading = document.getElementById("blogs-heading");
+
+            function renderBlogs(blogs, username, isOwnBlogs) {
+                listEl.innerHTML = "";
+                blogsStatusEl.style.display = "none";
+
+                if (blogs.length === 0) {
+                    showBlogsStatus(isOwnBlogs ? "You haven't posted anything yet." : `${username} hasn't posted anything yet.`, false);
+                    return;
+                }
+
+                blogs.forEach(blog => {
+                    const card = document.createElement("div");
+                    card.style.background = "#F3E5EC";
+                    card.style.borderRadius = "12px";
+                    card.style.padding = "16px 20px";
+                    card.style.marginBottom = "14px";
+                    card.style.position = "relative";
+
+                    const metaEl = document.createElement("div");
+                    metaEl.style.fontSize = "0.85em";
+                    metaEl.style.color = "#A86887";
+                    metaEl.style.marginBottom = "6px";
+                    metaEl.textContent = `${username} · ${formatDateAndHour(blog.date)}`;
+
+                    const contentEl = document.createElement("p");
+                    contentEl.textContent = blog.content;
+                    contentEl.style.margin = "0";
+
+                    card.appendChild(metaEl);
+                    card.appendChild(contentEl);
+
+                    // Only the owner of these blogs can delete them.
+                    if (isOwnBlogs) {
+                        contentEl.style.paddingRight = "60px"; // leave room for the delete button
+
+                        const deleteBtn = document.createElement("button");
+                        deleteBtn.textContent = "Delete";
+                        deleteBtn.style.position = "absolute";
+                        deleteBtn.style.top = "16px";
+                        deleteBtn.style.right = "20px";
+                        deleteBtn.style.background = "transparent";
+                        deleteBtn.style.border = "1px solid #A86887";
+                        deleteBtn.style.color = "#A86887";
+                        deleteBtn.style.borderRadius = "8px";
+                        deleteBtn.style.padding = "4px 10px";
+                        deleteBtn.style.cursor = "pointer";
+                        deleteBtn.addEventListener("click", async () => {
+                            if (!confirm("Delete this post? This can't be undone.")) {
+                                return;
+                            }
+                            deleteBtn.disabled = true;
+                            try {
+                                await deletePost(blog.id);
+                                loadBlogs(); // refresh the list so the deleted post disappears
+                            } catch (err) {
+                                console.error("Failed to delete post:", err);
+                                showBlogsStatus("Couldn't delete that post. Please try again.", true);
+                                deleteBtn.disabled = false;
+                            }
+                        });
+
+                        card.appendChild(deleteBtn);
+                    }
+
+                    listEl.appendChild(card);
+                });
+            }
+
+            async function loadBlogs() {
+                let loggedInUserId;
+                try {
+                    loggedInUserId = getCurrentUserId();
+                } catch {
+                    showBlogsStatus("You need to log in to see blogs.", true);
+                    newPostPane.style.display = "none";
+                    return;
+                }
+
+                const targetUserId = requestedUserId || loggedInUserId;
+                const isOwnBlogs = String(targetUserId) === String(loggedInUserId);
+
+                newPostPane.style.display = isOwnBlogs ? "block" : "none";
+
+                try {
+                    const [blogs, user] = await Promise.all([
+                        getPostsForUser(targetUserId),
+                        getUser(targetUserId)
+                    ]);
+                    const username = user.username || "Unnamed User";
+                    blogsHeading.textContent = isOwnBlogs ? "My Blogs" : `${username}'s Blogs`;
+                    renderBlogs(blogs, username, isOwnBlogs);
+                } catch (err) {
+                    console.error("Failed to load blogs:", err);
+                    showBlogsStatus("Couldn't load these blogs right now. Please try again later.", true);
+                }
+            }
+
+            submitBtn.addEventListener("click", async () => {
+                const content = contentInput.value.trim();
+
+                if (!content) {
+                    showStatus("Write something before posting.", true);
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                try {
+                    await createPost(content);
+                    contentInput.value = "";
+                    showStatus("Post created!", false);
+                    loadBlogs(); // refresh the list so the new post appears immediately
+                } catch (err) {
+                    console.error("Failed to create post:", err);
+                    if (err.message === "Not logged in") {
+                        showStatus("You need to log in to post.", true);
+                    } else {
+                        showStatus("Couldn't create your post. Please try again.", true);
+                    }
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            document.addEventListener("DOMContentLoaded", loadBlogs);
+        </script>
+
     </body>
 </html>

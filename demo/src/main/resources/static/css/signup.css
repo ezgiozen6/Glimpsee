@@ -1,0 +1,93 @@
+header {
+  height: 120px;
+  background-repeat: no-repeat;
+  text-align: center;
+  margin-top: 40px;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+}
+
+main{
+  background-color: #ffffff;
+}
+
+h2 {
+  font-size: 48px;
+  padding: 0;
+  margin: 0;
+  color: #000;
+  font-weight: bold;
+}
+
+h4 {
+  font-size: 18px;
+  padding: 0;
+  margin: 10px 0;
+  color: #000;
+  font-weight: 100px;
+}
+
+h5 {
+  font-size: 12px;
+  padding: 0;
+  margin: 5px 0;
+  color: #000;
+  font-weight: 100px;
+}
+
+.signupbox {
+  height: 400px;
+  width:600px;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  background-color: #ffffff;
+  gap: 5px;
+  background-color: #F4E1EA;
+  border-radius: 20px;
+  padding: 40px;
+  min-height: 250px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin: 50px auto;
+  margin-top: 13px;
+}
+
+.signupbox label {
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.signupbox input {
+  height: 20px;
+  font-size: 18px;
+  padding: 5px 10px;
+  margin-top: -3px;
+}
+
+.signupbutton{
+  text-align: center;
+  margin-top: 20px;
+  margin-top: -50px;
+}
+
+.signupbutton input{
+  background-color: #A86887;
+  text-align: center;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  list-style: none;
+  margin: 30px auto 0;
+  width: 250px;
+}
+
+.signupbutton input:hover{
+  background-color: #A46382;
+  transform: scale(1.05);
+}

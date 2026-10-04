@@ -69,24 +69,7 @@ nav{
 }
 
 .arrow {
-    font-size: 12px;
-}
-
-.get-started{
-  background-color: #A86887;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.get-started:hover{
-  background-color: #A46382;
-  transform: scale(1.05);
+  font-size: 12px;
 }
 
 .gear-icon {
@@ -654,4 +637,105 @@ h3 {
   font-size: 18px;
   margin-bottom: 20px;
   color: #000;
+}
+
+.blog-header {
+  display: flex;
+  align-items: center;
+  background-color: #f6dce8;
+  gap: 30px;
+  border-radius: 20px;
+  padding: 30px 40px;
+  min-height: 220px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin: 40px 60px;
+}
+ 
+.blog-left {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: #E1B6CB;
+}
+ 
+.blog-right {
+  flex: 1;
+}
+ 
+.blog-right h3 {
+  text-align: left;
+  margin: 0;
+  padding: 0 0 10px 0;
+}
+ 
+.blog-right p {
+  font-size: 18px;
+  font-weight: 300;
+  margin: 0 0 15px 0;
+}
+
+dialog#list-modal {
+    border: none;
+    border-radius: 16px;
+    padding: 0;
+    width: 360px;
+    max-width: 90vw;
+    max-height: 70vh;
+    overflow: hidden;
+}
+dialog#list-modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+.modal-header button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-list {
+    overflow-y: auto;
+    max-height: calc(70vh - 56px);
+    padding: 8px 0;
+}
+.list-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+.list-row:hover {
+    background: #f5f5f5;
+}
+.list-row .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #E1B6CB;
+    flex-shrink: 0;
+}
+.list-row .username {
+    font-weight: 600;
+}
+.modal-empty {
+    text-align: center;
+    color: #888;
+    padding: 30px 20px;
+}
+#stat-following-row, #stat-followers-row {
+    cursor: pointer;
 }

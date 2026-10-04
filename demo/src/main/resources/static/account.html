@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
         <title>Main Page</title>
         <link rel="stylesheet" href="css/style.css">
         <script src="jssrc/UserApi.js"></script>
@@ -8,7 +9,7 @@
     <body>
         <nav class="navbar">
             <ul class="nav-links">
-                <li><a href="account.html"> Profile <span class="arrow">▾</span> </a></li>
+                <li><a href="account.html"> Account <span class="arrow">▾</span> </a></li>
                 <li><a href="blogs.html"> Blogs <span class="arrow">▾</span> </a></li>
                 <li><a href="posts.html"> Posts <span class="arrow">▾</span> </a></li>
                 <li><a href="following.html"> Following <span class="arrow">▾</span> </a></li>
@@ -30,12 +31,23 @@
                 <p id="profile-bio">&nbsp;</p>
                 <div class="profile-stats">
                     <span><strong id="stat-posts">0</strong> Posts</span>
-                    <span><strong id="stat-followers">0</strong> Followers</span>
-                    <span><strong id="stat-following">0</strong> Following</span>
+                    <span id="stat-followers-row"><strong id="stat-followers">0</strong> Followers</span>
+                    <span id="stat-following-row"><strong id="stat-following">0</strong> Following</span>
                 </div>
-                <button class="get-started" id="edit-profile-btn">Edit Profile</button>
+                <button class="login" id="edit-profile-btn">Edit Profile</button>
+                <button class="login" id="view-blogs-btn"><a href="blogs.html">View Blogs</a></button>
             </div>
         </section>
+
+        <dialog id="list-modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Following</h3>
+                <button id="modal-close-btn" aria-label="Close">✕</button>
+            </div>
+            <div class="modal-list" id="modal-list">
+                <!-- rows get inserted here -->
+            </div>
+        </dialog>
 
         <p id="profile-error" class="centered-text" style="color:#A86887; display:none;">
             Couldn't load your profile right now. Please try again later.
@@ -43,19 +55,34 @@
 
        
         <script>
+            // account.html?id=5 views user 5's profile. No id in the URL falls back
+            // to the logged-in user's own profile (the old default behavior).
+            const params = new URLSearchParams(window.location.search);
+            const requestedUserId = params.get("id");
+            let currentProfileUserId = null; // set once loadProfile resolves; used by the Following popup
+
             // Page-specific logic only — all fetch/auth details live in js/api.js.
             async function loadProfile() {
-                let userId;
+                let loggedInUserId;
                 try {
-                    userId = getCurrentUserId();
+                    loggedInUserId = getCurrentUserId();
                 } catch {
                     document.getElementById("profile-name").textContent = "Not logged in";
                     document.getElementById("profile-error").style.display = "block";
                     return;
                 }
 
+                const profileUserId = requestedUserId || loggedInUserId;
+                currentProfileUserId = profileUserId;
+                const isOwnProfile = String(profileUserId) === String(loggedInUserId);
+
+                // Edit Profile only makes sense on your own page.
+                document.getElementById("edit-profile-btn").style.display = isOwnProfile ? "inline-block" : "none";
+                // Always points at the profile currently being viewed, not necessarily the logged-in user.
+                document.getElementById("view-blogs-btn").href = `blogs.html?id=${profileUserId}`;
+
                 try {
-                    const user = await getUser(userId);
+                    const user = await getUser(profileUserId);
                     document.getElementById("profile-name").textContent = user.username || "Unnamed User";
                     // User.java has no bio field yet, so we show join date instead.
                     // Add a "bio" column + getter/setter to User.java if you want a real bio here.
@@ -65,9 +92,9 @@
                     // No avatarUrl field on User yet either — keeping the default placeholder image.
 
                     const [followers, following, posts] = await Promise.all([
-                        getFollowerCount(userId),
-                        getFollowingCount(userId),
-                        getPostCountForUser(userId)
+                        getFollowerCount(profileUserId),
+                        getFollowingCount(profileUserId),
+                        getPostCountForUser(profileUserId)
                     ]);
 
                     document.getElementById("stat-followers").textContent = followers;
@@ -85,6 +112,67 @@
                 // Hook this up to your edit-profile page/modal.
                 window.location.href = "edit-profile.html";
             });
+
+            const listModal = document.getElementById("list-modal");
+            const modalList = document.getElementById("modal-list");
+
+            const modalTitle = document.getElementById("modal-title");
+
+            async function openListPopup(type) {
+                // type is "following" or "followers"
+                if (!currentProfileUserId) return; // profile hasn't loaded yet
+
+                modalTitle.textContent = type === "following" ? "Following" : "Followers";
+                modalList.innerHTML = '<p class="modal-empty">Loading…</p>';
+                listModal.showModal();
+
+                try {
+                    const users = type === "following"
+                        ? await getFollowingUsers(currentProfileUserId)
+                        : await getFollowersUsers(currentProfileUserId);
+                    renderUserList(users);
+                } catch (err) {
+                    console.error(`Failed to load ${type} list:`, err);
+                    modalList.innerHTML = '<p class="modal-empty">Couldn\'t load this list. Please try again.</p>';
+                }
+            }
+
+            document.getElementById("stat-following-row").addEventListener("click", () => openListPopup("following"));
+            document.getElementById("stat-followers-row").addEventListener("click", () => openListPopup("followers"));
+
+            document.getElementById("modal-close-btn").addEventListener("click", () => {
+                listModal.close();
+            });
+
+            function renderUserList(users) {
+                modalList.innerHTML = "";
+
+                if (users.length === 0) {
+                    modalList.innerHTML = '<p class="modal-empty">No one here yet.</p>';
+                    return;
+                }
+
+                users.forEach(user => {
+                    const row = document.createElement("div");
+                    row.className = "list-row";
+
+                    const avatar = document.createElement("div");
+                    avatar.className = "avatar";
+
+                    const name = document.createElement("span");
+                    name.className = "username";
+                    name.textContent = user.username || "Unnamed User";
+
+                    row.appendChild(avatar);
+                    row.appendChild(name);
+
+                    row.addEventListener("click", () => {
+                        window.location.href = `account.html?id=${user.id}`;
+                    });
+
+                    modalList.appendChild(row);
+                });
+            }
 
             document.addEventListener("DOMContentLoaded", loadProfile);
         </script>
