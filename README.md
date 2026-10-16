@@ -54,8 +54,10 @@ Developed by a team using HTML, CSS, SQL, JAVA, JAVASCRIPT.
 
 SQL database is used in this website.
 Entities:
-- Usernames
+- Users
+- Blogs
 - Posts
+- Notifications
 - Followings
 - Messages
 
