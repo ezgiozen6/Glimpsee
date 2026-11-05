@@ -1,4 +1,4 @@
-# Our Website
+# Glimpsee
 
 A full stack social network platform where users will be able to blog, share photos, and communicate with each other by real-time chatting.
 Developed by a team using HTML, CSS, SQL, JAVA, JAVASCRIPT.
@@ -69,13 +69,12 @@ Entities:
 
 ## Installation
 
-## Future Improvments
+## Future Improvements
 
 ## Contributors
 
 - Ezgi Özen
 - Nazlı Işıl Koper
 
-## Project Highlights
 
 
